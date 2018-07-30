@@ -1,6 +1,7 @@
 ﻿using BeardedManStudios.Forge.Networking.Frame;
 using BeardedManStudios.Forge.Networking.Generated;
 using BeardedManStudios.SimpleJSON;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -28,6 +29,8 @@ namespace BeardedManStudios.Forge.Networking.Unity
         private List<int> loadingScenes = new List<int>();
 
 		public bool IsServer { get { return Networker.IsServer; } }
+
+        public Action MasterServerRegistrationSuccess;
 
 		/// <summary>
 		/// Used to enable or disable the automatic switching for clients
@@ -243,7 +246,6 @@ namespace BeardedManStudios.Forge.Networking.Unity
 				{
 					Text temp = Text.CreateFromString(client.Time.Timestep, masterServerData.ToString(), true, Receivers.Server, MessageGroupIds.MASTER_SERVER_REGISTER, true);
 
-					//Debug.Log(temp.GetData().Length);
 					// Send the request to the server
 					client.Send(temp);
 
@@ -260,7 +262,17 @@ namespace BeardedManStudios.Forge.Networking.Unity
 					client = null;
 				}
 			};
-
+            client.textMessageReceived += (networkingPlayer, textFrame, netWorkerSender) =>
+            {
+                print(textFrame.ToString());
+                if(textFrame.GroupId == MessageGroupIds.MASTER_SERVER_REGISTER_SUCCESS)
+                {
+                    if(MasterServerRegistrationSuccess != null)
+                    {
+                        MasterServerRegistrationSuccess();
+                    }
+                }
+            };
 			client.Connect(_masterServerHost, _masterServerPort);
 
 			Networker.disconnected += NetworkerDisconnected;

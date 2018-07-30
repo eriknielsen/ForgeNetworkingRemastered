@@ -159,6 +159,52 @@ public class MultiplayerMenu : MonoBehaviour
 		Connected(server);
 	}
 
+    public void HostWithMasterServer()
+    {
+        server = new UDPServer(64);
+        ((UDPServer)server).Connect(port: ushort.Parse(portNumber.text), natHost: natServerHost, natPort: natServerPort);
+
+        if (!server.IsBound)
+        {
+            Debug.LogError("NetWorker failed to bind");
+            return;
+        }
+
+        if (mgr == null && networkManager == null)
+        {
+            Debug.LogWarning("A network manager was not provided, generating a new one instead");
+            networkManager = new GameObject("Network Manager");
+            mgr = networkManager.AddComponent<NetworkManager>();
+        }
+        else if (mgr == null)
+            mgr = Instantiate(networkManager).GetComponent<NetworkManager>();
+
+        // If we are using the master server we need to get the registration data
+        JSONNode masterServerData = null;
+        if (!string.IsNullOrEmpty(masterServerHost))
+        {
+            string serverId = "myGame";
+            string serverName = "Forge Game";
+            string type = "Deathmatch";
+            string mode = "Teams";
+            string comment = "Demo comment...";
+
+            masterServerData = mgr.MasterServerRegisterData(server, serverId, serverName, type, mode, comment, useElo, eloRequired);
+        }
+        // Wait for confirmation that the master server accepted us as a Host
+        mgr.MasterServerRegistrationSuccess += () => {
+            MainThreadManager.Run(() =>
+            {
+                Debug.Log("Successfully registered with the master server");
+                if (!DontChangeSceneOnConnect)
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                else
+                    NetworkObject.Flush(server); //Called because we are already in the correct scene!
+            });
+        };
+        mgr.Initialize(server, masterServerHost, masterServerPort, masterServerData);
+    }
+
 	private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.H))

@@ -138,7 +138,17 @@ namespace MasterServer
 
 			hosts.Add(host);
 			Log(string.Format($"Host [{address}] registered on port [{port}] with name [{name}]"));
-		}
+            
+
+            // tell the hoster that it was successfully registered
+            JSONNode sendData = JSONNode.Parse("{}");
+            JSONClass success = new JSONClass();
+            success.Add("success", "true");
+            sendData.Add("success", success);
+            /* { "success":{ "success":"true"} } */
+            Text textFrame = Text.CreateFromString(server.Time.Timestep, sendData.ToString(), false, Receivers.Target, MessageGroupIds.MASTER_SERVER_REGISTER_SUCCESS, true);
+            server.Send(player.TcpClientHandle, textFrame);
+        }
 
 		private void Update(NetworkingPlayer player, JSONNode data)
 		{

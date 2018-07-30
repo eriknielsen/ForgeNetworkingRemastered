@@ -52,6 +52,7 @@ namespace BeardedManStudios.Forge.Networking
 		public const int CACHE = 15;
 		public const int VIEW_INITIALIZE = 16;
 		public const int VIEW_CHANGE = 17;
+        public const int MASTER_SERVER_REGISTER_SUCCESS = 18;
 
 		public const int START_OF_GENERIC_IDS = 10000;
 	}
